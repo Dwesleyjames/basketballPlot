@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<title>D's Ballers</title>
+<!-- Example based on http://bl.ocks.org/mbostock/3887118 -->
+<!-- Tooltip example from http://www.d3noob.org/2013/01/adding-tooltips-to-d3js-graph.html -->
+
+<style>
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="javascripts/d3.slider.js"></script>
+<link rel="stylesheet" href="stylesheets/d3.slider.css"</link>
+
+<script>
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+// setup x 
+var xValue = function(d) { return d.minutes;}, // data -> value
+    xScale = d3.scale.linear().range([0, width]), // value -> display
+    xMap = function(d) { return xScale(xValue(d));}, // data -> display
+    xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+    
+
+// setup y
+var yValue = function(d) { return d.points;}, // data -> value
+    yScale = d3.scale.linear().range([height, 0]), // value -> display
+    yMap = function(d) { return yScale(yValue(d));}, // data -> display
+    yAxis = d3.svg.axis().scale(yScale).orient("left"),
+    yMapSteal = function(d) { return yScale(d.steals); },
+    yMapAssist = function(d) { return yScale(d.assists); },
+    yMapRebound = function(d) { return yScale(d.rebounds); },
+    yMapBlock = function(d) { return yScale(d.blocks); };
+
+// add the graph canvas to the body of the webpage
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+// add the tooltip area to the webpage
+var tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+    
+var yearSlider = d3.slider().axis(true).min(2000).max(2100).step(5);
+    
+//bools to check whether the set is showing
+var pointB = true,
+    stealB = false,
+    assistB = false,
+    reboundB = false,
+    blockB = false;
+    
+var minYear = 2000;
+var maxYear = 2001;
+var yDomain = 2800;
+var radius = 3;
+    
+xScale.domain([0, 3500]);    //d3.max(data, xValue)+1
+
+
+
+//start with points out and showing
+d3.csv("http://localhost:8000/public/data/basketball_players.csv", function(error, data) {
+
+  //y scale to show points
+  yScale.domain([0, 2800]);    
+
+  // x-axis
+    svg.append("g")
+          .attr("class", "xaxis")
+          .attr("transform", "translate(0," + height + ")")
+          .call(xAxis)
+        .append("text")
+          .attr("class", "xlabel")
+          .attr("x", width)
+          .attr("y", -6)
+          .style("text-anchor", "end")
+          .text("Minutes");
+
+    // y-axis
+    svg.append("g")
+          .attr("class", "yaxis")
+          .call(yAxis)
+        
+  svg.selectAll(".pdot")
+      .data(data)
+    .enter().append("circle")
+      .filter( function(d) {return (d.minutes > 10);})   //Filter out what to draw
+      .attr("class", "pdot")
+      .attr("r", radius)
+      .attr("cx", xMap)
+      .attr("cy", yMap)
+      .style("fill", "lightBlue") 
+      .style("opacity", 0);
+      
+      //fade in point dots
+        svg.selectAll(".pdot")
+            .data(data)
+            .filter( function(d) { return (d.year >= minYear && d.year < maxYear); })
+            .transition()
+            .duration(500)
+            .style("opacity", 1);
+      
+      //call slider
+      d3.select('#slider7').call(d3.slider().axis(true).value([2000, 2001]).min(2000).max(2006).step(1).on("slide", function(evt, value){
+        
+        //value[0] is the lowest year
+        //value[1] is the highest year
+        minYear = value[0];
+        maxYear = value[1];
+        
+        //fade in/out appropriate dots on slide
+        
+        
+        //fade out point dots
+        svg.selectAll(".pdot")
+            .data(data)
+            .transition().duration(500)
+            .style("opacity", 0);
+            
+        //fade in point dots
+        svg.selectAll(".pdot")
+            .data(data)
+            .filter( function(d) { return (d.year >= minYear && d.year < maxYear); })
+            .transition()
+            .duration(500)
+            .style("opacity", 1);
+            
+        //fade out steal dots
+        svg.selectAll(".sdot")
+            .data(data)
+            .transition().duration(500)
+            .style("opacity", 0); 
+           
+        //fade in steal dots
+        svg.selectAll(".sdot")
+            .data(data)
+            .filter( function(d) { return (d.year >= minYear && d.year < maxYear); })
+            .transition()
+            .duration(500)
+            .style("opacity", 1);
+            
+        //fade out assist dots
+        svg.selectAll(".adot")
+            .data(data)
+            .transition().duration(500)
+            .style("opacity", 0); 
+           
+        //fade in assist dots
+        svg.selectAll(".adot")
+            .data(data)
+            .filter( function(d) { return (d.year >= minYear && d.year < maxYear); })
+            .transition()
+            .duration(500)
+            .style("opacity", 1);
+            
+        //fade out rebound dots
+        svg.selectAll(".rdot")
+            .data(data)
+            .transition().duration(500)
+            .style("opacity", 0); 
+           
+        //fade in rebound dots
+        svg.selectAll(".rdot")
+            .data(data)
+            .filter( function(d) { return (d.year >= minYear && d.year < maxYear); })
+            .transition()
+            .duration(500)
+            .style("opacity", 1);
+        
+        //fade out block dots
+        svg.selectAll(".bdot")
+            .data(data)
+            .transition().duration(500)
+            .style("opacity", 0); 
+           
+        //fade in block dots
+        svg.selectAll(".bdot")
+            .data(data)
+            .filter( function(d) { return (d.year >= minYear && d.year < maxYear); })
+            .transition()
+            .duration(500)
+            .style("opacity", 1);
+    }));
+    
+});
+
+
+
+//decides Y-axis domain, and which dots to remove
+function handleUpdate(data){
+
+    var newY;
+    if (pointB){ newY = 2800; } 
+    else if (reboundB){ newY = 1100;} 
+    else if (assistB){ newY = 800; } 
+    else if (stealB || blockB) { newY = 240;} //blocks or steals
+    else { newY = yDomain; }
+    
+    yScale.domain([0,newY])
+    
+    //transition y-axis
+    svg.select(".yaxis")
+            .transition().duration(500).ease("sin-in-out")
+            .call(yAxis);
+    
+    if (newY != yDomain){
+        yDomain = newY;
+        if(assistB){
+            //smooth Y value transition for assist dots
+              svg.selectAll(".adot")
+                    .data(data)
+                    .transition().duration(500).ease("linear")
+                    .attr("cx", xMap)
+                    .attr("cy", yMapAssist);
+        }
+        
+        if(stealB){
+            //smooth Y value transition for steal dots
+              svg.selectAll(".sdot")
+                    .data(data)
+                    .transition().duration(500).ease("linear")
+                    .attr("cx", xMap)
+                    .attr("cy", yMapSteal);
+        }
+        
+        if(reboundB) {
+            //smooth Y value transition for rebound dots
+              svg.selectAll(".rdot")
+                    .data(data)
+                    .transition().duration(500).ease("linear")
+                    .attr("cx", xMap)
+                    .attr("cy", yMapRebound);
+        }
+        
+        if(blockB) {
+            //smooth Y value transition for rebound dots
+              svg.selectAll(".bdot")
+                    .data(data)
+                    .transition().duration(500).ease("linear")
+                    .attr("cx", xMap)
+                    .attr("cy", yMapBlock);
+        }
+    }
+}
+
+//show Steals
+function stealData(button){
+
+    //change button to pressed down
+    button.style.borderStyle = (button.style.borderStyle!=='inset' ? 'inset' : 'outset'); 
+    
+    //reload the data
+    d3.csv("http://localhost:8000/public/data/basketball_players.csv", function(error, data) {
+
+        if (!stealB){
+            stealB = true;
+            handleUpdate(data);
+
+            //create new dots
+            var sdot = svg.selectAll(".sdot")
+                .data(data)
+                .enter()
+                .append("circle")
+              .filter( function(d) {return (d.minutes > 10);})   //Filter out what to draw
+              .attr("class", "sdot")
+              .attr("r", radius)
+              .attr("cx", xMap)
+              .attr("cy", yMapSteal)
+              .style("fill", "red") 
+              .style("opacity", 0);
+            
+              //fade in steal dots
+            svg.selectAll(".sdot")
+                .data(data)
+                .filter( function(d) { return (d.year >= minYear && d.year < maxYear); })
+                .transition().duration(500)
+                .style("opacity", 1); 
+          
+          } else {
+            stealB = false;
+            handleUpdate(data);
+            
+            svg.selectAll(".sdot")
+                .transition()
+                .duration(500)
+                .style("opacity", 0)
+                .remove();
+          }
+    });
+}
+
+//show Assists
+function assistData(button){
+
+    //change button to pressed down
+    button.style.borderStyle = (button.style.borderStyle!=='inset' ? 'inset' : 'outset'); 
+    
+    //reload the data
+    d3.csv("http://localhost:8000/public/data/basketball_players.csv", function(error, data) {
+        
+        if (!assistB){
+            assistB = true;
+            handleUpdate(data);
+
+            //create new dots
+            var sdot = svg.selectAll(".adot")
+                .data(data)
+                .enter()
+                .append("circle")
+              .filter( function(d) {return (d.minutes > 10);})   //Filter out what to draw
+              .attr("class", "adot")
+              .attr("r", radius)
+              .attr("cx", xMap)
+              .attr("cy", yMapAssist)
+              .style("fill", "green") 
+              .style("opacity", 0);
+             
+              //fade in steal dots
+            svg.selectAll(".adot")
+                .data(data)
+                .filter( function(d) { return (d.year >= minYear && d.year < maxYear); })
+                .transition().duration(500)
+                .style("opacity", 1); 
+          
+          } else {
+            assistB = false;
+            handleUpdate(data);
+            
+            svg.selectAll(".adot")
+                .transition()
+                .duration(500)
+                .style("opacity", 0)
+                .remove();
+          }
+    });
+}
+
+//show Rebounds
+function reboundData(button){
+
+    //change button to pressed down
+    button.style.borderStyle = (button.style.borderStyle!=='inset' ? 'inset' : 'outset'); 
+    
+    //reload the data
+    d3.csv("http://localhost:8000/public/data/basketball_players.csv", function(error, data) {
+        
+        if (!reboundB){
+            reboundB = true;
+            handleUpdate(data);
+
+            //create new dots
+            var sdot = svg.selectAll(".rdot")
+                .data(data)
+                .enter()
+                .append("circle")
+              .filter( function(d) {return (d.minutes > 10);})   //Filter out what to draw
+              .attr("class", "rdot")
+              .attr("r", radius)
+              .attr("cx", xMap)
+              .attr("cy", yMapRebound)
+              .style("fill", "yellow") 
+              .style("opacity", 0);
+             
+              //fade in steal dots
+            svg.selectAll(".rdot")
+                .data(data)
+                .filter( function(d) { return (d.year >= minYear && d.year < maxYear); })
+                .transition().duration(500)
+                .style("opacity", 1); 
+          
+          } else {
+            reboundB = false;
+            handleUpdate(data);
+            
+            svg.selectAll(".rdot")
+                .transition()
+                .duration(500)
+                .style("opacity", 0)
+                .remove();
+          }
+    });
+}
+
+//show Blocks
+function blockData(button){
+    button.style.borderStyle = (button.style.borderStyle!=='inset' ? 'inset' : 'outset'); 
+
+    //reload the data
+    d3.csv("http://localhost:8000/public/data/basketball_players.csv", function(error, data) {
+        
+        if (!blockB){
+            blockB = true;
+            handleUpdate(data);
+
+            //create new dots
+            var sdot = svg.selectAll(".bdot")
+                .data(data)
+                .enter()
+                .append("circle")
+              .filter( function(d) {return (d.minutes > 10);})   //Filter out what to draw
+              .attr("class", "bdot")
+              .attr("r", radius)
+              .attr("cx", xMap)
+              .attr("cy", yMapBlock)
+              .style("fill", "purple") 
+              .style("opacity", 0);
+             
+              //fade in steal dots
+            svg.selectAll(".bdot")
+                .data(data)
+                .filter( function(d) { return (d.year >= minYear && d.year < maxYear); })
+                .transition().duration(500)
+                .style("opacity", 1); 
+          
+          } else {
+            blockB = false;
+            handleUpdate(data);
+            
+            svg.selectAll(".bdot")
+                .transition()
+                .duration(500)
+                .style("opacity", 0)
+                .remove();
+          }
+    });
+}
+
+function testYear(d){
+    return (d.year >= minYear && d.year < maxYear);
+}
+
+//listener for point button
+function pointData(button){
+
+    //change button to pressed down 
+    button.style.borderStyle = (button.style.borderStyle!=='inset' ? 'inset' : 'outset'); 
+
+    //reload the data
+    d3.csv("http://localhost:8000/public/data/basketball_players.csv", function(error, data) {
+          
+        if (!pointB){
+            pointB = true;
+            handleUpdate(data);
+         
+            //smooths out Y axis transition
+            svg.select(".yaxis")
+                .transition().duration(500).ease("sin-in-out")
+                .call(yAxis);
+
+            //create new dots
+            svg.selectAll(".pdot")
+                .data(data)
+                .enter()
+                .append("circle")
+              .filter( function(d) {return (d.minutes > 10);})   //Filter out what to draw
+              .attr("class", "pdot")
+              .attr("r", radius)
+              .attr("cx", xMap)
+              .attr("cy", yMap)
+              .style("fill", "lightBlue") 
+              .style("opacity", 0);
+              
+              //fade in point dots
+            svg.selectAll(".pdot")
+                .data(data)
+                .filter( function(d) { return (d.year >= minYear && d.year < maxYear); })
+                .transition()
+                .duration(500)
+                .style("opacity", 1);
+          
+          } else {
+            pointB = false;
+            handleUpdate(data);
+            svg.selectAll(".pdot")
+                .transition()
+                .duration(500)
+                .style("opacity", 0)
+                .remove();
+          }
+    });
+}
+</script>
+</body>
+<div id="option" style="width:960px" align="center"> 
+    <input name="updatePointsButton"
+            type="button"
+            value="Points"
+            onclick="pointData(this)"
+            style="border-style:inset;margin:5px 15px 5px 15px"/>
+           
+    <input  name="updateAssistsButton"    
+            type="button"
+            value="Assists"
+            onclick="assistData(this)"
+            style="margin:5px 15px 5px 15px"/>
+
+    <input name="updateStealsButton"    
+            type="button"
+            value="Steals"
+            onclick="stealData(this)"
+            style="margin:5px 15px 5px 15px"/>
+            
+    <input name="updateReboundsButton"    
+            type="button"
+            value="Rebounds"
+            onclick="reboundData(this)"
+            style="margin:5px 15px 5px 15px"/>   
+
+    <input name="updateBlocksButton"    
+            type="button"
+            value="Blocks"
+            onclick="blockData(this)"
+            style="margin:5px 15px 5px 15px"/>
+            
+    <div id="slider7" style="width:800px; margin: 0 auto; margin-top:10px"></div>
+</div>
+
+</html>
